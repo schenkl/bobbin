@@ -6,13 +6,9 @@ import atexit
 from adafruit_motorkit import MotorKit
 from adafruit_motor import stepper as stepper
 import serial
+import pdb
 
 Port = '/dev/ttyAMA0'
-
-#ser=serial.Serial(’/dev/ttyACM0’,9600)
-#readedText = ser.readline()
-#print(readedText)
-#ser.close()
 
 #contro sequences to LCD display: all start with 0xfe
 #	0x42 display on
@@ -36,31 +32,39 @@ Port = '/dev/ttyAMA0'
 #
 
 
-Serial_comm -1
+Serial_comm = -1
+
+
 def connect():
+	global Ser,Port
+	#pdb.set_trace()
+	print('trying to connect to: ',Port)
 	try:
-		Ser = serial.Serial(Port)
+		Ser = serial.Serial(Port,115200, timeout=1)
 		Serial_comm = 1
+		print('Successful connection to ',Port);
+		print(Ser)
 	except:
 		print("Unable to connect to port: ",Port)
 		Serial_comm = -1
 	return
 
 def lcd_on():
-	global Serial_comm
-	if (Serial_comm == 1)
+	global Serial_comm, Ser
+	if (Serial_comm == 1):
 		Ser.write('\xfe\x01')
 
 def lcd_off():
-	global Serial_comm
-	if (Serial_comm == 1)
+	global Serial_comm,Ser
+	if (Serial_comm == 1):
 		Ser.write('\xfe\x08')
 
 def lcd_init():		#screen on, cursor at 1,1 cursor off
-	global Serial_comm
-	if (Serial_comm == 1)
+	global Serial_comm,Ser
+	if (Serial_comm == 1):
 		Ser.write('\xfe\x42')
 		Ser.write('\xfe\x48')
 		Ser.write('\xfe\x54')
 		Ser.write('\xfe\x4b')
 
+connect()
