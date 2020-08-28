@@ -6,6 +6,13 @@ import board
 import atexit
 from adafruit_motorkit import MotorKit
 from adafruit_motor import stepper as stepper
+import threading
+
+
+# create empty threads (these will hold the stepper 1 and 2 threads)
+st1 = threading.Thread()  # pylint: disable=bad-thread-instantiation
+st2 = threading.Thread()  # pylint: disable=bad-thread-instantiation
+
 
 steps_revolution = 200
 revolution = 100
