@@ -9,7 +9,7 @@ import serial
 import pdb
 from flask import Flask, render_template, request
 from threading import Thread
-
+import RPi.GPIO as GPIO
 
 
 
@@ -41,6 +41,14 @@ Port = '/dev/ttyAMA0'
 Serial_comm = -1
 
 kit = MotorKit(i2c=board.I2C())
+
+#add second board....at address 0x61
+#from adafruit_motorkit import MotorKit
+# Initialise the first hat on the default address
+#kit1 = MotorKit()
+# Initialise the second hat on a different address
+#kit2 = MotorKit(address=0x61)
+
 
 def turnOffMotors():
 	kit.stepper1.release()
@@ -81,7 +89,6 @@ def lcd_init():		#screen on, cursor at 1,1 cursor off
 		Ser.write('\xfe\x54')
 		Ser.write('\xfe\x4b')
 
-#connect()
 
 app = Flask(__name__)
 GPIO.setmode(GPIO.BCM)
@@ -145,8 +152,11 @@ def action(deviceName, action):
         return render_template('index.html', **templateData)
 
 if __name__ == "__main__":
-   #app.run(host='0.0.0.0', port=5000, debug=True)
-    t = Thread(target=app.run, args=('0.0.0.0'),
+    #app.run(host='0.0.0.0', port=5000, debug=True)
+    #t = Thread(target=app.run, args=('0.0.0.0'),
+			#kwargs = {"port=5000": "debug=True"})
+    t = Thread(target=Flask(bobbin), args=('0.0.0.0'),
 			kwargs = {"port=5000": "debug=True"})
+    print('starting thread ',app)
     t.start
 
