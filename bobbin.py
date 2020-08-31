@@ -12,6 +12,10 @@ import RPi.GPIO as GPIO
 from flask import Flask, render_template, request
 import os
 
+kit = MotorKit(i2c=board.I2C())
+kit2 = MotorKit(address=0x61)
+
+
 #global variables from web page to all other threads
 STANDBY = 0
 START = 1
@@ -79,7 +83,10 @@ def M1_thread():		#string positioner
 		print('M1_thread:loop M1_direction = ',M1_direction)
 		if M1_direction != STOP:
 			print('Turning on M1 in direction: ',M1_direction)
-			time.sleep(3)
+			#time.sleep(3)
+			for i in range (200):
+				kit.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)			
+				kit2.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)			
 			M1_direction = STOP
 			print('M1_tread turning off M1_direction to STOP',M1_direction)
 	return
