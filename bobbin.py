@@ -12,8 +12,8 @@ import RPi.GPIO as GPIO
 from flask import Flask, render_template, request
 import os
 
-kit = MotorKit(i2c=board.I2C())
 kit2 = MotorKit(address=0x61)
+kit = MotorKit(i2c=board.I2C())
 
 
 #global variables from web page to all other threads
@@ -26,16 +26,26 @@ LEFT = 1
 RIGHT = 2
 STOP = 0
 
-motor1 = STANDBY
-motor2 = STANDBY
+M1_SLEEP_TIME = 0.5
+M1_STEPS = 10
+
+#Motor_states
+WINDING = 2
+CALIBRATING = 1
 
 M1_rotations = 0
 M2_rotations = 0
-M1_speed = 10
-M2_speed = 20
 M1_direction = STOP
 M2_direction = STOP
+M1_state = STANDBY
+M2_state = STANDBY
 
+# recommended for auto-disabling motors on shutdown!
+def turnOffMotors():
+    kit.stepper2.release()
+    kit2.stepper2.release()
+    kit.stepper1.release()
+    kit2.stepper1.release()
 
 #lcd section
 Port = '/dev/ttyAMA0'
@@ -65,40 +75,58 @@ Port = '/dev/ttyAMA0'
 Serial_comm = -1
 
 def lcd_thread():
-	global M1_speed,M2_speed,M1_rotations,M2_rotations
+	global M1_speed,M2_speed,M1_rotations,M2_rotations,M1_state,M2_state
 	print("lcd_thread starting")
 	while True:
 		print("lcd_thread running")
 		#print('lcd_thread M1_rotations = ',M1_rotations)
-		report_M1_rotations(M1_rotations)
+		#report_M1_rotations(M1_rotations)
 		time.sleep(10)
 	return
 
 def M1_thread():		#string positioner
-	global M1_speed,M2_speed,M1_rotations,M2_rotations,M1_direction,M2_direction
+	global M1_speed,M2_speed,M1_rotations,M2_rotations,M1_direction,M2_direction,M1_state,M2_state
 	print("M1_thread starting")
 	while True:
 		#print("test_thread running")
-		time.sleep(1)
-		print('M1_thread:loop M1_direction = ',M1_direction)
-		if M1_direction != STOP:
-			print('Turning on M1 in direction: ',M1_direction)
-			#time.sleep(3)
-			for i in range (200):
-				kit.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)			
-				kit2.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)			
-			M1_direction = STOP
-			print('M1_tread turning off M1_direction to STOP',M1_direction)
-	return
+		#time.sleep(1)
+		#print('M1_thread:loop M1_direction = ',M1_direction)
+		#if M1_direction != STOP:
+			#print('Turning on M1 in direction: ',M1_direction)
+			##time.sleep(3)
+			#for i in range (200):
+				#kit.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)			
+				#kit2.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)			
+			#M1_direction = STOP
+			#turnOffMotors()
+			#print('M1_tread turning off M1_direction to STOP',M1_direction)
+		if M1_state == WINDING:
+			print('M1_rotations = ',M1_rotations)
+			M1_rotations = M1_rotations + (M1_STEPS / 100)
+			time.sleep(M1_SLEEP_TIME)
+			for i in range (M1_STEPS):
+				if (M1_rotations < 10):
+					kit.stepper1.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)			
+				else:
+					kit.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)			
+				if (M1_rotations > 20):
+					M1_rotations = 0
+		if M1_state == STANDBY:
+			turnOffMotors()
+			
+	#return
 
 def M2_thread():		#bobbin spinner
-	global M1_speed,M2_speed,M1_rotations,M2_rotations
+	global M1_speed,M2_speed,M1_rotations,M2_rotations,M1_state,M2_state
 	print("M2_thread starting")
 	while True:
 		#print("test_thread running")
-		time.sleep(1)
-		#M1_rotations = M1_rotations + 1
-	return
+		if M2_state == WINDING:
+			M2_rotations = M2_rotations + 1
+			kit2.stepper1.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)			
+		if M2_state == STANDBY:
+			turnOffMotors()
+	#return
 
 
 def connect():
@@ -142,60 +170,18 @@ def report_M1_rotations(val):
 
 #flask section...
 app = Flask(__name__)
-GPIO.setmode(GPIO.BCM)
-GPIO.setwarnings(False)
-#define sensors GPIOs
-button = 20
-senPIR = 16
-#define actuators GPIOs
-ledRed = 13
-ledYlw = 19
-ledGrn = 26
-#initialize GPIO status variables
-buttonSts = 0
-senPIRSts = 0
-ledRedSts = 0
-ledYlwSts = 0
-ledGrnSts = 0
-# Define button and PIR sensor pins as an input
-GPIO.setup(button, GPIO.IN)   
-GPIO.setup(senPIR, GPIO.IN)
-# Define led pins as output
-GPIO.setup(ledRed, GPIO.OUT)   
-GPIO.setup(ledYlw, GPIO.OUT) 
-GPIO.setup(ledGrn, GPIO.OUT) 
-# turn leds OFF 
-GPIO.output(ledRed, GPIO.LOW)
-GPIO.output(ledYlw, GPIO.LOW)
-GPIO.output(ledGrn, GPIO.LOW)
 	
-#@app.route("/", methods=['POST', 'GET'])
-#def index():
-	# Read GPIO Status
-	#buttonSts = GPIO.input(button)
-	#senPIRSts = GPIO.input(senPIR)
-	#ledRedSts = GPIO.input(ledRed)
-	#ledYlwSts = GPIO.input(ledYlw)
-	#ledGrnSts = GPIO.input(ledGrn)
-	#templateData = {
-      		#'button'  : buttonSts,
-      		#'senPIR'  : senPIRSts,
-      		#'ledRed'  : ledRedSts,
-      		#'ledYlw'  : ledYlwSts,
-      		#'ledGrn'  : ledGrnSts,
-      	#}
-	#return render_template('index.html')
 	
 @app.route("/", methods=['POST', 'GET'])
 def submit(): 
-	global M1_rotations,M1_direction
+	global M1_rotations,M1_direction,M1_state,M2_state,M1_rotations,M1_direction
 	if request.method == "POST":
 		if request.form.get("calibrate"):
 			print('calibrate')
-			#M1_rotations = 1000
 		elif request.form.get("start_winding"):
 			print('start_winding')
-			#M1_rotations = 1000
+			M1_state = WINDING
+			M2_state = WINDING
 		elif request.form.get("reboot"):
 			print('request to reboot')
 			os.system("sudo reboot")
@@ -212,10 +198,11 @@ def submit():
 		elif request.form.get("stop"):
 			print('request to stop')
 			M1_direction = STOP
+			M1_state = STANDBY
+			M2_state = STANDBY
 	elif request.method == "GET":
 			# do something
 			print('request.method')
-			#M1_rotations = 1000
 	return render_template('index.html')
 
 
@@ -224,59 +211,31 @@ def submit():
 	#calibrate_position()
 	#return render_template('index.html')
 
-#@app.route("/<deviceName>/<action>")
-#def action(deviceName, action):
-	#if deviceName == 'ledRed':
-		#actuator = ledRed
-	#if deviceName == 'ledYlw':
-		#actuator = ledYlw
-	#if deviceName == 'ledGrn':
-		#actuator = ledGrn
-   #
-	#if action == "on":
-		#GPIO.output(actuator, GPIO.HIGH)
-	#if action == "off":
-		#GPIO.output(actuator, GPIO.LOW)
-		     #
-	#buttonSts = GPIO.input(button)
-	#senPIRSts = GPIO.input(senPIR)
-	#ledRedSts = GPIO.input(ledRed)
-	#ledYlwSts = GPIO.input(ledYlw)
-	#ledGrnSts = GPIO.input(ledGrn)
-   #
-	#templateData = {
-	 	#'button'  : buttonSts,
-      		#'senPIR'  : senPIRSts,
-      		#'ledRed'  : ledRedSts,
-      		#'ledYlw'  : ledYlwSts,
-      		#'ledGrn'  : ledGrnSts,
-	#}
-	#return render_template('index.html', **templateData)
-#
 #def calibrate_position():
 	#print("Moving M2")
 
 
-#def flask_thread():
-	#t3 = app.run(host='0.0.0.0', port=5000, debug=False)
-	#t3.start()
+def flask_thread():
+	t4 = app.run(host='0.0.0.0', port=5000, debug=False)
+	t4.start()
 
 
 if __name__ == "__main__":
 	#flask_thread()
 	#print('starting lcd_thread')
-	t = threading.Thread(target=lcd_thread)
-	t.start()
+	t1 = threading.Thread(target=lcd_thread)
+	t1.start()
 	print('starting test_thread')
 	t2 = threading.Thread(target=M1_thread)
 	t2.start()
-	t4 = threading.Thread(target=M2_thread)
-	t4.start()
+	t3 = threading.Thread(target=M2_thread)
+	t3.start()
 	print('starting thread ',app)
 	print("starting web server")
-	t3 = threading.Thread(app.run(host='0.0.0.0', port=5000, debug=False))
-	t3.start()
-	#app.run(host='0.0.0.0', port=5000, debug=True)
+	#t4 = threading.Thread(app.run(host='0.0.0.0', port=5000, debug=False))
+	#t4.start()
+	#app.run(host='0.0.0.0', port=5000, debug=False , use_reloader=False)
+	flask_thread()
 	print('main thread')
 	while(True):
 		print('Main_thread')
