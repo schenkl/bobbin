@@ -18,6 +18,10 @@ START = 1
 RUN = 2
 RESET = 3
 
+LEFT = 1
+RIGHT = 2
+STOP = 0
+
 motor1 = STANDBY
 motor2 = STANDBY
 
@@ -25,6 +29,8 @@ M1_rotations = 0
 M2_rotations = 0
 M1_speed = 10
 M2_speed = 20
+M1_direction = STOP
+M2_direction = STOP
 
 
 #lcd section
@@ -64,15 +70,28 @@ def lcd_thread():
 		time.sleep(10)
 	return
 
-def test_thread():
-	global M1_speed,M2_speed,M1_rotations,M2_rotations
-	print("test_thread starting")
+def M1_thread():		#string positioner
+	global M1_speed,M2_speed,M1_rotations,M2_rotations,M1_direction,M2_direction
+	print("M1_thread starting")
 	while True:
 		#print("test_thread running")
 		time.sleep(1)
-		M1_rotations = M1_rotations + 1
+		print('M1_thread:loop M1_direction = ',M1_direction)
+		if M1_direction != STOP:
+			print('Turning on M1 in direction: ',M1_direction)
+			time.sleep(3)
+			M1_direction = STOP
+			print('M1_tread turning off M1_direction to STOP',M1_direction)
 	return
 
+def M2_thread():		#bobbin spinner
+	global M1_speed,M2_speed,M1_rotations,M2_rotations
+	print("M2_thread starting")
+	while True:
+		#print("test_thread running")
+		time.sleep(1)
+		#M1_rotations = M1_rotations + 1
+	return
 
 
 def connect():
@@ -110,8 +129,7 @@ def lcd_init():         #screen on, cursor at 1,1 cursor off
 
 def report_M1_rotations(val):
 	global M1_rotations
-	#print('report_M1_rotations : ', M1_rotations)
-	print('report_M1_rotations : ', val)
+	print('report_M1_rotations : ', M1_rotations)
 	return
 
 
@@ -163,20 +181,30 @@ GPIO.output(ledGrn, GPIO.LOW)
 	
 @app.route("/", methods=['POST', 'GET'])
 def submit(): 
-	global M1_rotations
+	global M1_rotations,M1_direction
 	if request.method == "POST":
 		if request.form.get("calibrate"):
 			print('calibrate')
-			M1_rotations = 1000
+			#M1_rotations = 1000
 		elif request.form.get("start_winding"):
 			print('start_winding')
 			#M1_rotations = 1000
 		elif request.form.get("reboot"):
-			print('reboot')
+			print('request to reboot')
 			os.system("sudo reboot")
 		elif request.form.get("shutdown"):
-			print('reboot')
+			print('request to shutdown')
 			os.system("sudo shutdown -h now")
+		elif request.form.get("left"):
+			print('request to move left')
+			M1_direction = LEFT
+			print('setting M1_direction to ',M1_direction)
+		elif request.form.get("right"):
+			print('request to move right')
+			M1_direction = RIGHT
+		elif request.form.get("stop"):
+			print('request to stop')
+			M1_direction = STOP
 	elif request.method == "GET":
 			# do something
 			print('request.method')
@@ -233,8 +261,10 @@ if __name__ == "__main__":
 	t = threading.Thread(target=lcd_thread)
 	t.start()
 	print('starting test_thread')
-	t2 = threading.Thread(target=test_thread)
+	t2 = threading.Thread(target=M1_thread)
 	t2.start()
+	t4 = threading.Thread(target=M2_thread)
+	t4.start()
 	print('starting thread ',app)
 	print("starting web server")
 	t3 = threading.Thread(app.run(host='0.0.0.0', port=5000, debug=False))
