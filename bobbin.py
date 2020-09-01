@@ -88,8 +88,8 @@ def turnOffMotors():
     kit.stepper1.release()
     kit2.stepper1.release()
     #time.sleep(0.5)
-    #M1_state = STANDBY
-    #M2_state = STANDBY
+    M1_state = STANDBY
+    M2_state = STANDBY
     print('Resetting state to STANDBY')
 
 def M1_thread():		#string positioner
@@ -97,7 +97,8 @@ def M1_thread():		#string positioner
 	print("M1_thread starting")
 	while True:
 		#time.sleep(1)
-		print('M1_thread:loop M1_state = ',M1_state)
+		if M1_state != 0:
+			print('M1_thread:loop M1_state = ',M1_state)
 		if M1_state == LEFT:
 			print('LEFT setting....')
 			for i in range(200):
@@ -125,7 +126,7 @@ def M1_thread():		#string positioner
 			turnOffMotors()
 			time.sleep(0.5)
 			M1_state = STANDBY
-		time.sleep(0.5)		
+		#time.sleep(0.5)		
 	return
 
 def M2_thread():		#bobbin spinner
@@ -145,7 +146,8 @@ def M2_thread():		#bobbin spinner
 			turnOffMotors()
 			time.sleep(0.5)
 			M2_state = STANDBY
-		print('M2_thread M2_rotations = ',M2_rotations)
+		if M2_state != 0:
+			print('M2_thread M2_rotations = ',M2_rotations)
 	return
 
 
