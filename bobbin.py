@@ -23,13 +23,14 @@ RUN = 2
 RESET = 3
 SHUTDOWN = 4
 
-LEFT = 1
-RIGHT = 2
-STOP = 0
+LEFT = 11
+RIGHT = 12
+STOP = 10
 
 M1_SLEEP_TIME = 0.5
 M1_STEPS = 10
 FULL_BOBIN = 100	#how many turns to fill the bobin....
+M1_position = 0
 
 #Motor_states
 WINDING = 2
@@ -41,15 +42,6 @@ M1_direction = STOP
 M2_direction = STOP
 M1_state = STANDBY
 M2_state = STANDBY
-
-# recommended for auto-disabling motors on shutdown!
-def turnOffMotors():
-    kit.stepper2.release()
-    kit2.stepper2.release()
-    kit.stepper1.release()
-    kit2.stepper1.release()
-    M1_state = STANDBY
-    M2_state = STANDBY
 
 #lcd section
 Port = '/dev/ttyAMA0'
@@ -88,24 +80,38 @@ def lcd_thread():
 		time.sleep(10)
 	return
 
+# recommended for auto-disabling motors on shutdown!
+def turnOffMotors():
+    print('Turning off motors')
+    kit.stepper2.release()
+    kit2.stepper2.release()
+    kit.stepper1.release()
+    kit2.stepper1.release()
+    #time.sleep(0.5)
+    #M1_state = STANDBY
+    #M2_state = STANDBY
+    print('Resetting state to STANDBY')
+
 def M1_thread():		#string positioner
 	global M1_speed,M2_speed,M1_rotations,M2_rotations,M1_direction,M2_direction,M1_state,M2_state
 	print("M1_thread starting")
 	while True:
-		#print("test_thread running")
 		#time.sleep(1)
-		#print('M1_thread:loop M1_direction = ',M1_direction)
-		#if M1_direction != STOP:
-			#print('Turning on M1 in direction: ',M1_direction)
-			##time.sleep(3)
-			#for i in range (200):
-				#kit.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)			
-				#kit2.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)			
-			#M1_direction = STOP
-			#turnOffMotors()
-			#print('M1_tread turning off M1_direction to STOP',M1_direction)
+		print('M1_thread:loop M1_state = ',M1_state)
+		if M1_state == LEFT:
+			print('LEFT setting....')
+			for i in range(200):
+				kit.stepper1.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)			
+			M1_state = SHUTDOWN	#shutdown motors
+			M1_position = 0	#reset counter
+		if M1_state == RIGHT:
+			print('RIGHT setting....M1_state = ',M1_state)
+			for i in range(200):
+				kit.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)			
+			M1_state = SHUTDOWN
+			M1_position = 0
 		if M1_state == WINDING:
-			print('M1_rotations = ',M1_rotations)
+			print('M1_state == WINDING M1_rotations = ',M1_rotations)
 			M1_rotations = M1_rotations + (M1_STEPS / 100)
 			time.sleep(M1_SLEEP_TIME)
 			for i in range (M1_STEPS):
@@ -117,8 +123,10 @@ def M1_thread():		#string positioner
 					M1_rotations = 0
 		if M1_state == SHUTDOWN:
 			turnOffMotors()
-			
-	#return
+			time.sleep(0.5)
+			M1_state = STANDBY
+		time.sleep(0.5)		
+	return
 
 def M2_thread():		#bobbin spinner
 	global M1_speed,M2_speed,M1_rotations,M2_rotations,M1_state,M2_state
@@ -130,11 +138,15 @@ def M2_thread():		#bobbin spinner
 			for i in range (200):	#1 turn of the motor ?3 turns of string
 				kit2.stepper1.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)			
 			if M2_rotations > FULL_BOBIN:	#stop both motors
+				time.sleep(0.5)
 				M2_state = SHUTDOWN
 				M1_state = SHUTDOWN
 		if M2_state == SHUTDOWN:
 			turnOffMotors()
-	#return
+			time.sleep(0.5)
+			M2_state = STANDBY
+		print('M2_thread M2_rotations = ',M2_rotations)
+	return
 
 
 def connect():
@@ -198,11 +210,12 @@ def submit():
 			os.system("sudo shutdown -h now")
 		elif request.form.get("left"):
 			print('request to move left')
-			M1_direction = LEFT
-			print('setting M1_direction to ',M1_direction)
+			M1_state = LEFT
+			print('setting M1_state to ',M1_state)
 		elif request.form.get("right"):
 			print('request to move right')
-			M1_direction = RIGHT
+			M1_state = RIGHT
+			print('setting M1_state to ',M1_state)
 		elif request.form.get("stop"):
 			print('request to stop')
 			M1_direction = STOP
