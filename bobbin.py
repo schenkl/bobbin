@@ -21,6 +21,7 @@ STANDBY = 0
 START = 1
 RUN = 2
 RESET = 3
+SHUTDOWN = 4
 
 LEFT = 1
 RIGHT = 2
@@ -28,6 +29,7 @@ STOP = 0
 
 M1_SLEEP_TIME = 0.5
 M1_STEPS = 10
+FULL_BOBIN = 100	#how many turns to fill the bobin....
 
 #Motor_states
 WINDING = 2
@@ -46,6 +48,8 @@ def turnOffMotors():
     kit2.stepper2.release()
     kit.stepper1.release()
     kit2.stepper1.release()
+    M1_state = STANDBY
+    M2_state = STANDBY
 
 #lcd section
 Port = '/dev/ttyAMA0'
@@ -111,7 +115,7 @@ def M1_thread():		#string positioner
 					kit.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)			
 				if (M1_rotations > 20):
 					M1_rotations = 0
-		if M1_state == STANDBY:
+		if M1_state == SHUTDOWN:
 			turnOffMotors()
 			
 	#return
@@ -123,8 +127,12 @@ def M2_thread():		#bobbin spinner
 		#print("test_thread running")
 		if M2_state == WINDING:
 			M2_rotations = M2_rotations + 1
-			kit2.stepper1.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)			
-		if M2_state == STANDBY:
+			for i in range (200):	#1 turn of the motor ?3 turns of string
+				kit2.stepper1.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)			
+			if M2_rotations > FULL_BOBIN:	#stop both motors
+				M2_state = SHUTDOWN
+				M1_state = SHUTDOWN
+		if M2_state == SHUTDOWN:
 			turnOffMotors()
 	#return
 
@@ -198,8 +206,11 @@ def submit():
 		elif request.form.get("stop"):
 			print('request to stop')
 			M1_direction = STOP
-			M1_state = STANDBY
-			M2_state = STANDBY
+			M1_state = SHUTDOWN
+			M2_state = SHUTDOWN
+			#reset all counters here
+			M1_rotations = 0
+			M2_rotations = 0
 	elif request.method == "GET":
 			# do something
 			print('request.method')
