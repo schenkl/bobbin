@@ -11,6 +11,8 @@ import threading
 import RPi.GPIO as GPIO
 from flask import Flask, render_template, request
 import os
+#not for use if lcd display is present
+#import curses
 
 kit2 = MotorKit(address=0x61)
 kit = MotorKit(i2c=board.I2C())
@@ -38,6 +40,8 @@ CALIBRATING = 1
 
 M1_rotations = 0
 M2_rotations = 0
+M1_rotations_left = -1
+M1_rotations_right = -1
 M1_direction = STOP
 M2_direction = STOP
 M1_state = STANDBY
@@ -73,18 +77,27 @@ Serial_comm = -1
 def lcd_thread():
 	global M1_speed,M2_speed,M1_rotations,M2_rotations,M1_state,M2_state
 	#print("lcd_thread starting")
+	#stdscr = curses.initscr()
+	#stdscr.clear()
 	say_once = 1
 	while True:
 		#print("lcd_thread running")
 		#print('lcd_thread M1_rotations = ',M1_rotations)
 		#report_M1_rotations(M1_rotations)
 		if M1_state != 0:
+			#stdscr.clear()
 			print('M1_thread:loop M1_state = ',M1_state,'\tM2_state = ',M2_state)
-			#print('M1_rotations = ',M1_rotations)
-			#print("{:.1f}".format(number))
+			#print('\r')
+			print('M1_rotations = ',M1_rotations)
+			#print('\r')
+			print("{:.1f}".format(number))
+			#print('\r')
 			print("M1_rotations = {:.1f}".format(M1_rotations))
+			#print('\r')
 			print('M2_rotations = ',M2_rotations)
+			#print('\r')
 			print('')
+			#win.refresh()
 			say_once = 1
 		else:
 			if say_once == 1:
@@ -217,15 +230,21 @@ def submit():
 			print('calibrate')
 		elif request.form.get("start_winding"):
 			print('start_winding')
-			M1_state = WINDING
-			M2_state = WINDING
+			if (M1_rotations_left == -1) or (M1_rotations_right == -1):
+				print('Please set left and right limits first...')
+			else:
+				M1_state = WINDING
+				M2_state = WINDING
 		elif request.form.get("reboot"):
 			print('request to reboot')
 			os.system("sudo reboot")
 		elif request.form.get("left set"):
 			print('left set')
+			M1_rotations = 0
+			M1_rotations_left = 0
 		elif request.form.get("right set"):
 			print('right set')
+			M1_rotation_right = M1_rotations
 		elif request.form.get("shutdown"):
 			print('request to shutdown')
 			os.system("sudo shutdown -h now")
