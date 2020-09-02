@@ -9,7 +9,7 @@ import serial
 import pdb
 import threading
 import RPi.GPIO as GPIO
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, flash
 import os
 #not for use if lcd display is present
 #import curses
@@ -90,7 +90,6 @@ def lcd_thread():
 			#print('\r')
 			print('M1_rotations = ',M1_rotations)
 			#print('\r')
-			print("{:.1f}".format(number))
 			#print('\r')
 			print("M1_rotations = {:.1f}".format(M1_rotations))
 			#print('\r')
@@ -224,14 +223,21 @@ app = Flask(__name__)
 	
 @app.route("/", methods=['POST', 'GET'])
 def submit(): 
-	global M1_rotations,M1_direction,M1_state,M2_state,M1_rotations,M1_direction
+	global M1_rotations,M1_direction,M1_state,M2_state,M1_rotations,M1_direction,M1_rotations_left,M1_rotations_right
+	errors = []
 	if request.method == "POST":
 		if request.form.get("calibrate"):
 			print('calibrate')
 		elif request.form.get("start_winding"):
 			print('start_winding')
+			print('M1_rotations_left = ',M1_rotations_left)
+			print('M1_rotations_right = ',M1_rotations_right)
 			if (M1_rotations_left == -1) or (M1_rotations_right == -1):
 				print('Please set left and right limits first...')
+				#flash('You must set both left and right limits first')
+				errors.append(
+                			"Please make sure left and right limits are set"
+            			)
 			else:
 				M1_state = WINDING
 				M2_state = WINDING
@@ -244,7 +250,7 @@ def submit():
 			M1_rotations_left = 0
 		elif request.form.get("right set"):
 			print('right set')
-			M1_rotation_right = M1_rotations
+			M1_rotations_right = M1_rotations
 		elif request.form.get("shutdown"):
 			print('request to shutdown')
 			os.system("sudo shutdown -h now")
@@ -267,7 +273,8 @@ def submit():
 	elif request.method == "GET":
 			# do something
 			print('request.method')
-	return render_template('index.html')
+	print('Errors = ',errors)
+	return render_template('index.html',errors=errors)
 
 
 #@app.route("/calibrate")

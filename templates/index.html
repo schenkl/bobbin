@@ -16,6 +16,9 @@
 			&nbsp;
   			<button type="submit" name="stop" value="stop"> stop </button>
 			 <br>
+  			 {% for error in errors %}
+        			<h4>{{ error }}</h4>
+      		   	 {% endfor %}
 			 <br>
 			 <br>
 		</form> 		
