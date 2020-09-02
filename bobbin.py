@@ -72,12 +72,25 @@ Serial_comm = -1
 
 def lcd_thread():
 	global M1_speed,M2_speed,M1_rotations,M2_rotations,M1_state,M2_state
-	print("lcd_thread starting")
+	#print("lcd_thread starting")
+	say_once = 1
 	while True:
-		print("lcd_thread running")
+		#print("lcd_thread running")
 		#print('lcd_thread M1_rotations = ',M1_rotations)
 		#report_M1_rotations(M1_rotations)
-		time.sleep(10)
+		if M1_state != 0:
+			print('M1_thread:loop M1_state = ',M1_state,'\tM2_state = ',M2_state)
+			#print('M1_rotations = ',M1_rotations)
+			#print("{:.1f}".format(number))
+			print("M1_rotations = {:.1f}".format(M1_rotations))
+			print('M2_rotations = ',M2_rotations)
+			print('')
+			say_once = 1
+		else:
+			if say_once == 1:
+				print('motors not running')
+				say_once = 0
+		time.sleep(1)
 	return
 
 # recommended for auto-disabling motors on shutdown!
@@ -99,6 +112,7 @@ def M1_thread():		#string positioner
 		#time.sleep(1)
 		if M1_state != 0:
 			print('M1_thread:loop M1_state = ',M1_state)
+			pass
 		if M1_state == LEFT:
 			print('LEFT setting....')
 			for i in range(200):
@@ -112,7 +126,7 @@ def M1_thread():		#string positioner
 			M1_state = SHUTDOWN
 			M1_position = 0
 		if M1_state == WINDING:
-			print('M1_state == WINDING M1_rotations = ',M1_rotations)
+			#print('M1_state == WINDING M1_rotations = ',M1_rotations)
 			M1_rotations = M1_rotations + (M1_STEPS / 100)
 			time.sleep(M1_SLEEP_TIME)
 			for i in range (M1_STEPS):
@@ -144,10 +158,11 @@ def M2_thread():		#bobbin spinner
 				M1_state = SHUTDOWN
 		if M2_state == SHUTDOWN:
 			turnOffMotors()
-			time.sleep(0.5)
+			#time.sleep(0.5)
 			M2_state = STANDBY
 		if M2_state != 0:
-			print('M2_thread M2_rotations = ',M2_rotations)
+			#print('M2_thread M2_rotations = ',M2_rotations)
+			pass
 	return
 
 
@@ -207,6 +222,10 @@ def submit():
 		elif request.form.get("reboot"):
 			print('request to reboot')
 			os.system("sudo reboot")
+		elif request.form.get("left set"):
+			print('left set')
+		elif request.form.get("right set"):
+			print('right set')
 		elif request.form.get("shutdown"):
 			print('request to shutdown')
 			os.system("sudo shutdown -h now")
