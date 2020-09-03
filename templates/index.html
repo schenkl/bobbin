@@ -3,6 +3,8 @@
       <title>GPIO Control</title>
       <link rel="stylesheet" href='../static/style.css'/>
    </head>
+   <meta http-equiv="refresh" content="10">
+   <title>{{ title }}</title>
    <body>
 	<p>
 		<h1>Bobbin Winder Control</h1>
@@ -44,6 +46,11 @@
 			&nbsp;
   			<button type="submit" name="shutdown" value="shutdown"> shutdown </button>
 			 <br>
+		</form> 		
+
+		<h3> M1_rotations_left  =  {{ M1_rotations_left }}</h3>
+		<h3> M1_rotations_right =  {{ M1_rotations_right }}</h3>
+		<h3> M2_rotations   =  {{ M2_rotations }}</h3>
   	</p> 
     </body>
 </html>

@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import time
+import datetime
 import board
 import atexit
 from adafruit_motorkit import MotorKit
@@ -223,8 +224,10 @@ app = Flask(__name__)
 	
 @app.route("/", methods=['POST', 'GET'])
 def submit(): 
-	global M1_rotations,M1_direction,M1_state,M2_state,M1_rotations,M1_direction,M1_rotations_left,M1_rotations_right
+	global M1_rotations,M1_direction,M1_state,M2_state,M1_rotations,M2_rotations,M1_direction,M1_rotations_left,M1_rotations_right
 	errors = []
+	error = 0
+	templateData = {}	#create an empty array, fill it in if everything is OK
 	if request.method == "POST":
 		if request.form.get("calibrate"):
 			print('calibrate')
@@ -233,14 +236,21 @@ def submit():
 			print('M1_rotations_left = ',M1_rotations_left)
 			print('M1_rotations_right = ',M1_rotations_right)
 			if (M1_rotations_left == -1) or (M1_rotations_right == -1):
-				print('Please set left and right limits first...')
+				print('Left and right limits must be set first before winding can begin.')
 				#flash('You must set both left and right limits first')
 				errors.append(
-                			"Please make sure left and right limits are set"
+                			"Left and right limits must be set first before winding can begin."
             			)
+				error =1
 			else:
 				M1_state = WINDING
 				M2_state = WINDING
+				now = datetime.datetime.now()
+				timeString = now.strftime("%Y-%m-%d %H:%M")
+				templateData = {
+					'title' : 'HELLO!',
+					'time': timeString
+ 				}
 		elif request.form.get("reboot"):
 			print('request to reboot')
 			os.system("sudo reboot")
@@ -250,7 +260,13 @@ def submit():
 			M1_rotations_left = 0
 		elif request.form.get("right set"):
 			print('right set')
-			M1_rotations_right = M1_rotations
+			if M1_rotations_left == -1:
+				print('Left rotation needs to be set first, please set Left side before setting right.')
+				errors.append('Left rotation needs to be set first, please set Left side before setting right..')
+				error = 1
+			else:
+				M1_rotations_right = M1_rotations
+				errors.append('System is ready to start winding, hit start_winding when bobbin is ready.')
 		elif request.form.get("shutdown"):
 			print('request to shutdown')
 			os.system("sudo shutdown -h now")
@@ -274,7 +290,20 @@ def submit():
 			# do something
 			print('request.method')
 	print('Errors = ',errors)
-	return render_template('index.html',errors=errors)
+	print('error = ',error)
+	if error == 1:
+		return render_template('index.html',errors=errors)
+	else:
+		#now = datetime.datetime.now()
+		#timeString = now.strftime("%Y-%m-%d %H:%M")
+		templateData = {
+			#'title' : 'HELLO!',
+			#'time': timeString'
+			'M1_rotations_left': M1_rotations_left,
+			'M1_rotations_right': M1_rotations_right,
+			'M2_rotations': M2_rotations
+ 		}
+		return render_template('index.html', **templateData)
 
 
 #@app.route("/calibrate")
