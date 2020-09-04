@@ -8,24 +8,25 @@
    <body>
 	<p>
 		<h1>Bobbin Winder Control</h1>
-		<h2> winding options</h2>
+		<h2> Winding options</h2>
 		<div>
 		<form method ="post" action="/">
 			<!-- Write your comments here -->
   			<!--<button style=”width: 550px;”type="submit" name="calibrate" value="cailbrate"> calibrate </button>
 			&nbsp; -->
-  			<button type="submit" name="start_winding" value="start_winding"> start_winding </button>
+  			<button type="submit" name="start_winding" style="width:100px;"  value="start_winding"> start_winding </button>
 			&nbsp;
-  			<button type="submit" name="pause" value="pause"> pause </button>
+  			<button type="submit" name="pause" style="width:100px;"  value="pause"> pause </button>
 			&nbsp;
-  			<button type="submit" name="stop" value="stop"> stop reset </button>
+  			<button type="submit" name="stop" style="width:100px;"  value="stop"> stop reset </button>
 			 <br>
   			 {% for error in errors %}
         			<h4>{{ error }}</h4>
       		   	 {% endfor %}
+			<h3> {{ Notification }}</h3>
 			 <br>
 		</form> 		
-		<h2> set up options</h2>
+		<h2> Set up options</h2>
 		<form method ="post" action="/">
   			<button type="submit" name="left" style="width:100px;" value="left"> left </button>
 			&nbsp;
@@ -47,14 +48,6 @@
 			&nbsp;
 			 <br>
 
-		</form> 		
-		<h2> bobbin options</h2>
-		<form method ="post" action="/">
-  			<button type="submit" name="reboot" value="reboot"> reboot </button>
-			&nbsp;
-  			<button type="submit" name="shutdown" value="shutdown"> shutdown </button>
-		</form> 		
-
 
 
 		 <br>
@@ -63,11 +56,20 @@
 		<h3> M2_rotations   =  {{ M2_rotations }}</h3>
 		<h3> Full_bobbin   =  {{ Full_bobbin }}</h3>
 		</form> 		
-		<h2> bobbin options</h2>
+		<h2> Bobbin options</h2>
 		<form method ="post" action="/">
-  			<button type="submit" name="bobbin_increase" value="bobbin_increase"> bobbin_increase </button>
-  			<button type="submit" name="bobbin_decrease" value="bobbin_decrease"> bobbin_decrease </button>
+  			<button type="submit" name="bobbin_increase" style="width:150px;"  value="bobbin_increase"> bobbin_increase </button>
+  			<button type="submit" name="bobbin_decrease" style="width:150px;"  value="bobbin_decrease"> bobbin_decrease </button>
 		</form> 		
+
+		</form> 		
+		<h2> Computer options</h2>
+		<form method ="post" action="/">
+  			<button type="submit" name="reboot" style="width:100px;"  value="reboot"> reboot </button>
+			&nbsp;
+  			<button type="submit" name="shutdown" style="width:100px;"  value="shutdown"> shutdown </button>
+		</form> 		
+
   	</p> 
 	<!--
 	<form method="POST">

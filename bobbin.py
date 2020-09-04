@@ -26,6 +26,8 @@ RUN = 2
 RESET = 3
 SHUTDOWN = 4
 SPEED = 1	#speed (time) for setting left and right margins
+Notification = ""
+
 
 LEFT = 11
 RIGHT = 12
@@ -121,7 +123,7 @@ def turnOffMotors():
     print('Resetting state to STANDBY')
 
 def M1_thread():		#string positioner
-	global M1_speed,M2_speed,M1_rotations,M2_rotations,M1_direction,M2_direction,M1_state,M2_state
+	global M1_speed,M2_speed,M1_rotations,M2_rotations,M1_direction,M2_direction,M1_state,M2_state,SPEED,M1_rotations_right,M1_rotations_left
 	print("M1_thread starting")
 	while True:
 		#time.sleep(1)
@@ -130,16 +132,19 @@ def M1_thread():		#string positioner
 			pass
 		if M1_state == LEFT:
 			print('LEFT setting....')
-			for i in range(200):
+			for i in range(200 * SPEED):
 				kit.stepper1.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)			
 			M1_state = SHUTDOWN	#shutdown motors
 			M1_position = 0	#reset counter
 		if M1_state == RIGHT:
+			if M1_rotations_right == -1:
+				M1_rotations_right = 0		#reset to zero is -1 as used in marker that it has not been touched
 			print('RIGHT setting....M1_state = ',M1_state)
-			for i in range(200):
+			for i in range(200 * SPEED):
 				kit.stepper1.onestep(direction=stepper.BACKWARD, style=stepper.DOUBLE)			
 			M1_state = SHUTDOWN
 			M1_position = 0
+			M1_rotations_right = M1_rotations_right + SPEED
 		if M1_state == WINDING:
 			#print('M1_state == WINDING M1_rotations = ',M1_rotations)
 			M1_rotations = M1_rotations + (M1_STEPS / 100)
@@ -226,9 +231,10 @@ app = Flask(__name__)
 	
 @app.route("/", methods=['POST', 'GET'])	#sssss
 def submit(): 
-	global M1_rotations,M1_direction,M1_state,M2_state,M1_rotations,M2_rotations,M1_direction,M1_rotations_left,M1_rotations_right,Full_bobbin,M1_rotations_settings
+	global M1_rotations,M1_direction,M1_state,M2_state,M1_rotations,M2_rotations,M1_direction,M1_rotations_left,M1_rotations_right,Full_bobbin,M1_rotations_settings,SPEED,Notification
 	errors = []
 	error = 0
+	#Notification = ''	#clear string
 	templateData = {}	#create an empty array, fill it in if everything is OK
 	if request.method == "POST":
 		if request.form.get("calibrate"):
@@ -260,13 +266,13 @@ def submit():
 			print('decreasing bobbin count')
 			Full_bobbin = Full_bobbin - int(Full_bobbin / 10)
 		elif request.form.get("1X"):
-			pass
+			SPEED = 1
 		elif request.form.get("2X"):
-			pass
+			SPEED = 2
 		elif request.form.get("5X"):
-			pass
+			SPEED = 5
 		elif request.form.get("10X"):
-			pass
+			SPEED = 10
 		elif request.form.get("pause"):
 			M1_state = SHUTDOWN
 			M2_state = SHUTDOWN
@@ -285,9 +291,9 @@ def submit():
 				errors.append('Left rotation needs to be set first, please set Left side before setting right..')
 				error = 1
 			else:
-				M1_rotations_right = M1_rotations_settings
+				#M1_rotations_right = M1_rotations_settings
 				#M1_rotations_right = M1_rotations
-				errors.append('System is ready to start winding, hit start_winding when bobbin is ready.')
+				Notification = 'System is ready to start winding, hit start_winding when bobbin is ready.'
 		elif request.form.get("shutdown"):
 			print('request to shutdown')
 			os.system("sudo shutdown -h now")
@@ -315,15 +321,12 @@ def submit():
 	if error == 1:
 		return render_template('index.html',errors=errors)
 	else:
-		#now = datetime.datetime.now()
-		#timeString = now.strftime("%Y-%m-%d %H:%M")
 		templateData = {
-			#'title' : 'HELLO!',
-			#'time': timeString'
 			'M1_rotations_left': M1_rotations_left,
 			'M1_rotations_right': M1_rotations_right,
 			'M2_rotations': M2_rotations,
-			'Full_bobbin' : Full_bobbin
+			'Full_bobbin' : Full_bobbin,
+			'Notification' : Notification
  		}
 		return render_template('index.html', **templateData)
 
