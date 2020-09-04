@@ -255,10 +255,7 @@ def submit():
 				M2_state = WINDING
 				now = datetime.datetime.now()
 				timeString = now.strftime("%Y-%m-%d %H:%M")
-				templateData = {
-					'title' : 'HELLO!',
-					'time': timeString
- 				}
+				Notification = ''
 		elif request.form.get("bobbin_increase"):
 			print('increasinf bobbin count')
 			Full_bobbin = Full_bobbin + int(Full_bobbin / 10)
