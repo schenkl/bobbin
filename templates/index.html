@@ -16,12 +16,13 @@
 			&nbsp; -->
   			<button type="submit" name="start_winding" value="start_winding"> start_winding </button>
 			&nbsp;
-  			<button type="submit" name="stop" value="stop"> stop </button>
+  			<button type="submit" name="pause" value="pause"> pause </button>
+			&nbsp;
+  			<button type="submit" name="stop" value="stop"> stop reset </button>
 			 <br>
   			 {% for error in errors %}
         			<h4>{{ error }}</h4>
       		   	 {% endfor %}
-			 <br>
 			 <br>
 		</form> 		
 		<h2> set up options</h2>
@@ -29,8 +30,6 @@
   			<button type="submit" name="left" value="left"> left </button>
 			&nbsp;
   			<button type="submit" name="left set" value="left set"> left set </button>
-			 <br>
-			 <br>
 			 <br>
 		</form> 		
 		<form method ="post" action="/">
@@ -40,22 +39,26 @@
 			 <br>
 
 		</form> 		
-		<h2> computer options</h2>
+		<h2> bobbin options</h2>
 		<form method ="post" action="/">
   			<button type="submit" name="reboot" value="reboot"> reboot </button>
 			&nbsp;
   			<button type="submit" name="shutdown" value="shutdown"> shutdown </button>
-			 <br>
 		</form> 		
 
 
 
 		 <br>
-		 <br>
-		 <br>
 		<h3> M1_rotations_left  =  {{ M1_rotations_left }}</h3>
 		<h3> M1_rotations_right =  {{ M1_rotations_right }}</h3>
 		<h3> M2_rotations   =  {{ M2_rotations }}</h3>
+		<h3> Full_bobbin   =  {{ Full_bobbin }}</h3>
+		</form> 		
+		<h2> bobbin options</h2>
+		<form method ="post" action="/">
+  			<button type="submit" name="bobbin_increase" value="bobbin_increase"> bobbin_increase </button>
+  			<button type="submit" name="bobbin_decrease" value="bobbin_decrease"> bobbin_decrease </button>
+		</form> 		
   	</p> 
 	<!--
 	<form method="POST">

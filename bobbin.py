@@ -32,7 +32,7 @@ STOP = 10
 
 M1_SLEEP_TIME = 0.5
 M1_STEPS = 10
-FULL_BOBIN = 100	#how many turns to fill the bobin....
+Full_bobbin= 100	#how many turns to fill the bobin....
 M1_position = 0
 
 #Motor_states
@@ -165,7 +165,7 @@ def M2_thread():		#bobbin spinner
 			M2_rotations = M2_rotations + 1
 			for i in range (200):	#1 turn of the motor ?3 turns of string
 				kit2.stepper1.onestep(direction=stepper.FORWARD, style=stepper.DOUBLE)			
-			if M2_rotations > FULL_BOBIN:	#stop both motors
+			if M2_rotations > Full_bobbin:	#stop both motors
 				time.sleep(0.5)
 				M2_state = SHUTDOWN
 				M1_state = SHUTDOWN
@@ -222,9 +222,9 @@ def report_M1_rotations(val):
 app = Flask(__name__)
 	
 	
-@app.route("/", methods=['POST', 'GET'])
+@app.route("/", methods=['POST', 'GET'])	#sssss
 def submit(): 
-	global M1_rotations,M1_direction,M1_state,M2_state,M1_rotations,M2_rotations,M1_direction,M1_rotations_left,M1_rotations_right
+	global M1_rotations,M1_direction,M1_state,M2_state,M1_rotations,M2_rotations,M1_direction,M1_rotations_left,M1_rotations_right,Full_bobbin
 	errors = []
 	error = 0
 	templateData = {}	#create an empty array, fill it in if everything is OK
@@ -251,6 +251,15 @@ def submit():
 					'title' : 'HELLO!',
 					'time': timeString
  				}
+		elif request.form.get("bobbin_increase"):
+			print('increasinf bobbin count')
+			Full_bobbin = Full_bobbin + int(Full_bobbin / 10)
+		elif request.form.get("bobbin_decrease"):
+			print('decreasing bobbin count')
+			Full_bobbin = Full_bobbin - int(Full_bobbin / 10)
+		elif request.form.get("pause"):
+			M1_state = SHUTDOWN
+			M2_state = SHUTDOWN
 		elif request.form.get("reboot"):
 			print('request to reboot')
 			os.system("sudo reboot")
@@ -301,7 +310,8 @@ def submit():
 			#'time': timeString'
 			'M1_rotations_left': M1_rotations_left,
 			'M1_rotations_right': M1_rotations_right,
-			'M2_rotations': M2_rotations
+			'M2_rotations': M2_rotations,
+			'Full_bobbin' : Full_bobbin
  		}
 		return render_template('index.html', **templateData)
 
