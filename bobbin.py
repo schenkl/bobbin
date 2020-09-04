@@ -25,6 +25,7 @@ START = 1
 RUN = 2
 RESET = 3
 SHUTDOWN = 4
+SPEED = 1	#speed (time) for setting left and right margins
 
 LEFT = 11
 RIGHT = 12
@@ -258,6 +259,14 @@ def submit():
 		elif request.form.get("bobbin_decrease"):
 			print('decreasing bobbin count')
 			Full_bobbin = Full_bobbin - int(Full_bobbin / 10)
+		elif request.form.get("1X"):
+			pass
+		elif request.form.get("2X"):
+			pass
+		elif request.form.get("5X"):
+			pass
+		elif request.form.get("10X"):
+			pass
 		elif request.form.get("pause"):
 			M1_state = SHUTDOWN
 			M2_state = SHUTDOWN
