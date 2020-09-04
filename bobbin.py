@@ -47,6 +47,7 @@ M1_direction = STOP
 M2_direction = STOP
 M1_state = STANDBY
 M2_state = STANDBY
+M1_rotations_settings = 0
 
 #lcd section
 Port = '/dev/ttyAMA0'
@@ -224,7 +225,7 @@ app = Flask(__name__)
 	
 @app.route("/", methods=['POST', 'GET'])	#sssss
 def submit(): 
-	global M1_rotations,M1_direction,M1_state,M2_state,M1_rotations,M2_rotations,M1_direction,M1_rotations_left,M1_rotations_right,Full_bobbin
+	global M1_rotations,M1_direction,M1_state,M2_state,M1_rotations,M2_rotations,M1_direction,M1_rotations_left,M1_rotations_right,Full_bobbin,M1_rotations_settings
 	errors = []
 	error = 0
 	templateData = {}	#create an empty array, fill it in if everything is OK
@@ -269,12 +270,14 @@ def submit():
 			M1_rotations_left = 0
 		elif request.form.get("right set"):
 			print('right set')
+			M1_rotations_settings = M1_rotations_settings + 1
 			if M1_rotations_left == -1:
 				print('Left rotation needs to be set first, please set Left side before setting right.')
 				errors.append('Left rotation needs to be set first, please set Left side before setting right..')
 				error = 1
 			else:
-				M1_rotations_right = M1_rotations
+				M1_rotations_right = M1_rotations_settings
+				#M1_rotations_right = M1_rotations
 				errors.append('System is ready to start winding, hit start_winding when bobbin is ready.')
 		elif request.form.get("shutdown"):
 			print('request to shutdown')
@@ -332,6 +335,7 @@ def submit():
 
 def flask_thread():
 	t4 = app.run(host='0.0.0.0', port=5000, debug=False)
+	#t4 = app.run(host='0.0.0.0', port=80, debug=False)
 	t4.start()
 
 
