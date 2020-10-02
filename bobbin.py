@@ -15,9 +15,12 @@ import os
 #not for use if lcd display is present
 #import curses
 
-kit2 = MotorKit(address=0x61)
-kit = MotorKit(i2c=board.I2C())
+#kit2 = MotorKit(address=0x61)
+#kit = MotorKit(i2c=board.I2C())
 
+
+kit = MotorKit(address=0x61)
+kit2 = MotorKit(i2c=board.I2C())
 
 #global variables from web page to all other threads
 STANDBY = 0
